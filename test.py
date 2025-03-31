@@ -1,9 +1,9 @@
 import pygame
 from enum import Enum
 
-WIDTH, HEIGHT = 800, 640 
 TILE_SIZE = 32 
 FPS = 60
+WIDTH, HEIGHT = 16*TILE_SIZE, 12*TILE_SIZE 
     
 # Colors
 WHITE = pygame.color.Color(255,255,255)
@@ -41,29 +41,36 @@ def create_background(background_tile: pygame.Surface) -> pygame.Surface:
 
 
 # Functions
-def render_tile_rect(screen: pygame.Surface, color: pygame.color.Color, x: int, y: int) -> None:
+def render_tile_plain(screen: pygame.Surface, color: pygame.color.Color, x: int, y: int) -> None:
     new_surface = pygame.Surface((TILE_SIZE,TILE_SIZE))
     new_surface.fill(color)
     screen.blit(new_surface, (x*TILE_SIZE, y*TILE_SIZE))
 
-def render_tile():
-    pass
+# TODO: test 
+def check_collision(surf1: pygame.Surface, surf2: pygame.Surface) -> bool:
+    rect1 = surf1.get_rect()
+    rect2 = surf2.get_rect()
+    if (rect1.x > rect2.x) and (rect1.x < rect2.x+rect2.width) or \
+            (rect1.y > rect2.y) and (rect1.y < rect2.y+rect2.height):
+            return True
+    else:
+        return False
 
-# TODO: add collision function
-def check_collision():
-    pass
 
-# TODO: add other directions (north works fine for now), add bounds check
 def add_wall(screen: pygame.Surface, color: pygame.color.Color, x: int, y: int, direction: Direction, length: int) -> None:
     match direction:
         case Direction.NORTH:
-           [render_tile_rect(screen, color, x, y+i) for i in range(length)]
+            assert(y-length >= 0)
+            [render_tile_plain(screen, color, x, y-i) for i in range(length)]
         case Direction.EAST:
-            pass
+            assert(x+length < WIDTH)
+            [render_tile_plain(screen, color, x+i, y) for i in range(length)]
         case Direction.SOUTH:
-            pass
+            assert(y+length < HEIGHT)
+            [render_tile_plain(screen, color, x, y+i) for i in range(length)]
         case Direction.WEST:
-            pass
+            assert(x-length >= 0)
+            [render_tile_plain(screen, color, x-i, y) for i in range(length)]
 
 
 
@@ -99,19 +106,21 @@ if __name__ == "__main__":
                     pygame.quit()
                     exit()
                 elif event.key == pygame.K_RIGHT:
+                    assert(player.pos_x+1 < WIDTH)
                     player.pos_x += 1
                 elif event.key == pygame.K_LEFT:
+                    assert(player.pos_x-1 >= 0)
                     player.pos_x -= 1
                 elif event.key == pygame.K_UP:
+                    assert(player.pos_y-1 >= 0)
                     player.pos_y -= 1
                 elif event.key == pygame.K_DOWN:
+                    assert(player.pos_y+1 < HEIGHT)
                     player.pos_y += 1
 
 
-            render_tile_rect(screen, player.player_color, player.pos_x, player.pos_y)
-            add_wall(screen, GRAY, 7, 7, Direction.NORTH, 5)
-            # render_tile_rect(screen, GRAY, 5, 6)
-            # render_tile_rect(screen, GRAY, 5, 7)
+            render_tile_plain(screen, player.player_color, player.pos_x, player.pos_y)
+            add_wall(screen, GRAY, x=7, y=7, direction=Direction.NORTH, length=5)
 
             pygame.display.update()
             clock.tick(FPS)
