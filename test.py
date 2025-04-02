@@ -60,17 +60,17 @@ def check_collision(surf1: pygame.Surface, surf2: pygame.Surface) -> bool:
 def add_wall(screen: pygame.Surface, color: pygame.color.Color, x: int, y: int, direction: Direction, length: int) -> None:
     match direction:
         case Direction.NORTH:
-            assert(y-length >= 0)
-            [render_tile_plain(screen, color, x, y-i) for i in range(length)]
+            if (y-length >= 0):
+                [render_tile_plain(screen, color, x, y-i) for i in range(length)]
         case Direction.EAST:
-            assert(x+length < WIDTH)
-            [render_tile_plain(screen, color, x+i, y) for i in range(length)]
+            if (x+length < WIDTH):
+                [render_tile_plain(screen, color, x+i, y) for i in range(length)]
         case Direction.SOUTH:
-            assert(y+length < HEIGHT)
-            [render_tile_plain(screen, color, x, y+i) for i in range(length)]
+            if (y+length < HEIGHT):
+                [render_tile_plain(screen, color, x, y+i) for i in range(length)]
         case Direction.WEST:
-            assert(x-length >= 0)
-            [render_tile_plain(screen, color, x-i, y) for i in range(length)]
+            if (x-length >= 0):
+                [render_tile_plain(screen, color, x-i, y) for i in range(length)]
 
 
 
@@ -106,17 +106,17 @@ if __name__ == "__main__":
                     pygame.quit()
                     exit()
                 elif event.key == pygame.K_RIGHT:
-                    assert(player.pos_x+1 < WIDTH)
-                    player.pos_x += 1
+                    if (player.pos_x+1 < WIDTH//TILE_SIZE):
+                        player.pos_x += 1
                 elif event.key == pygame.K_LEFT:
-                    assert(player.pos_x-1 >= 0)
-                    player.pos_x -= 1
+                    if (player.pos_x-1 >= 0):
+                        player.pos_x -= 1
                 elif event.key == pygame.K_UP:
-                    assert(player.pos_y-1 >= 0)
-                    player.pos_y -= 1
+                    if (player.pos_y-1 >= 0):
+                        player.pos_y -= 1
                 elif event.key == pygame.K_DOWN:
-                    assert(player.pos_y+1 < HEIGHT)
-                    player.pos_y += 1
+                    if (player.pos_y+1 < HEIGHT//TILE_SIZE):
+                        player.pos_y += 1
 
 
             render_tile_plain(screen, player.player_color, player.pos_x, player.pos_y)
