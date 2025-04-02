@@ -3,7 +3,8 @@ from enum import Enum
 
 TILE_SIZE = 32 
 FPS = 60
-WIDTH, HEIGHT = 16*TILE_SIZE, 12*TILE_SIZE 
+WIDTH, HEIGHT = TILE_SIZE*32, TILE_SIZE*24
+STATUSBAR_HEIGHT = TILE_SIZE*4
     
 # Colors
 WHITE = pygame.color.Color(255,255,255)
@@ -73,10 +74,10 @@ def check_collision(surf1: pygame.Surface, surf2: pygame.Surface) -> bool:
 
 
 def update_statusbar(screen: pygame.Surface, player: Player, font: pygame.font.Font) -> None:
-    statusbar = pygame.Surface((WIDTH, 3*TILE_SIZE))
+    statusbar = pygame.Surface((WIDTH, STATUSBAR_HEIGHT))
     statusbar_text = font.render(f'Health: {player.health}', False, WHITE)
     statusbar.blit(statusbar_text, (0,0))
-    screen.blit(statusbar, (0, HEIGHT-statusbar.get_height()))
+    screen.blit(statusbar, (0, HEIGHT-STATUSBAR_HEIGHT))
     
 
 
@@ -122,7 +123,7 @@ if __name__ == "__main__":
                     if (player.pos_y-1 >= 0):
                         player.pos_y -= 1
                 elif event.key == pygame.K_DOWN:
-                    if (player.pos_y+1 < HEIGHT//TILE_SIZE):
+                    if (player.pos_y+1 < (HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE):
                         player.pos_y += 1
                 elif event.key == pygame.K_d:
                     if player.health > 5: player.health -= 5
