@@ -21,16 +21,42 @@ class Direction(Enum):
 
 # Classes
 class Player:
-    health = 100
-    armor = 0
-    pos_x = 0
-    pos_y = 0
-    player_color = GRAY 
-    player_rect = pygame.rect.Rect(0, 0, TILE_SIZE, TILE_SIZE)
 
-    def __init__(self):
+    def __init__(self, player_surf):
         self.health = 100
+        self.health = 100
+        self.armor = 0
+        self.pos_x = 0
+        self.pos_y = 0
+        self.player_color = GRAY 
+        self.player_surf = player_surf
+        self.player_surf.fill(GRAY)
         print("PLAYER IS CREATED")
+
+
+class Item:
+    def __init__(self, name: str, icon: pygame.Surface, description: str, stackable: bool = True) -> None:
+        self.name = name
+        self.icon = icon
+        self.description = description
+        self.stackable = stackable
+
+
+class Inventory:
+    def __init__(self, capacity: int) -> None:
+        self.capacity = capacity
+        self.slots = {}
+
+    def add_item(self) -> None:
+        pass
+
+    def remove_item(self) -> None:
+        pass
+
+
+class InputHandler():
+    def __init__(self) -> None:
+        pass
 
 # Functions
 def create_background(background_tile: pygame.Surface) -> pygame.Surface:
@@ -63,9 +89,7 @@ def add_wall(screen: pygame.Surface, color: pygame.color.Color, x: int, y: int, 
                 [render_tile_plain(screen, color, x-i, y) for i in range(length)]
 
 
-def check_collision(surf1: pygame.Surface, surf2: pygame.Surface) -> bool:
-    rect1 = surf1.get_rect()
-    rect2 = surf2.get_rect()
+def check_collision(rect1: pygame.rect.Rect, rect2: pygame.rect.Rect) -> bool:
     if (rect1.x > rect2.x) and (rect1.x < rect2.x+rect2.width) or \
             (rect1.y > rect2.y) and (rect1.y < rect2.y+rect2.height):
             return True
@@ -75,7 +99,7 @@ def check_collision(surf1: pygame.Surface, surf2: pygame.Surface) -> bool:
 
 def update_statusbar(screen: pygame.Surface, player: Player, font: pygame.font.Font) -> None:
     statusbar = pygame.Surface((WIDTH, STATUSBAR_HEIGHT))
-    statusbar_text = font.render(f'Health: {player.health}', False, WHITE)
+    statusbar_text = font.render(f'Health: {player.health}', False, WHITE)  # lmao multiple line text isn't supported
     statusbar.blit(statusbar_text, (0,0))
     screen.blit(statusbar, (0, HEIGHT-STATUSBAR_HEIGHT))
     
@@ -98,8 +122,8 @@ if __name__ == "__main__":
     wall1 = pygame.rect.Rect(0, 0, TILE_SIZE, TILE_SIZE)
     wall2 = pygame.rect.Rect(0, 0, TILE_SIZE, TILE_SIZE)
 
-    player = Player()
-
+    player = Player(pygame.Surface((TILE_SIZE, TILE_SIZE)))
+        
     background = create_background(FLOOR_IMG)
 
     # game loop
@@ -108,7 +132,6 @@ if __name__ == "__main__":
         screen.blit(background, (0,0))
 
         for event in pygame.event.get():
-
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
