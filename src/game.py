@@ -52,6 +52,9 @@ class Inventory:
 
     def remove_item(self) -> None:
         pass
+    
+    def select_item(self) -> None:
+        pass
 
 
 class InputHandler():
@@ -116,7 +119,7 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
     
     # Sprites
-    FLOOR_IMG = pygame.image.load("sprites/Floor.png").convert_alpha()
+    FLOOR_IMG = pygame.image.load("../sprites/Floor.png").convert_alpha()
     FONT = pygame.font.Font(None, 30)
      
     wall1 = pygame.rect.Rect(0, 0, TILE_SIZE, TILE_SIZE)
