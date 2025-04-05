@@ -5,7 +5,7 @@ TILE_SIZE = 32
 FPS = 60
 WIDTH, HEIGHT = TILE_SIZE*32, TILE_SIZE*24
 STATUSBAR_HEIGHT = TILE_SIZE*4
-    
+
 # Colors
 WHITE = pygame.color.Color(255,255,255)
 BLACK = pygame.color.Color(0,0,0)
@@ -26,6 +26,7 @@ class Player:
         self.health = 100
         self.health = 100
         self.armor = 0
+        self.inventory = Inventory(10)
         self.pos_x = 0
         self.pos_y = 0
         self.player_color = GRAY 
@@ -43,18 +44,35 @@ class Item:
 
 
 class Inventory:
+    '''
+    An inventory class.
+    Stackable objects can be stacked indefinetely.
+    Unstackable ones can only exist in one instance.   
+    '''
     def __init__(self, capacity: int) -> None:
         self.capacity = capacity
         self.slots = {}
 
-    def add_item(self) -> None:
-        pass
+    def add_item(self, item: Item) -> bool:
+        '''Returns True if item can be picked up, False otherwise'''
+        if item.name in self.slots:
+            if item.stackable:
+                item_amount = self.slots[item.name][1] 
+                self.slots[item.name] = (item, item_amount + 1) 
+                return True
+        elif len(self.slots) < self.capacity:
+            self.slots[item.name] = (item, 1)
+            return True
+        return False
+            
 
-    def remove_item(self) -> None:
-        pass
-    
-    def select_item(self) -> None:
-        pass
+    def remove_item(self, item: Item) -> bool:
+        '''Returns True if item can be deleted, False otherwise'''
+        if not item.name in self.slots: return False
+        item_amount = self.slots[item.name][1]
+        if item_amount <= 0: return False
+        self.slots[item.name] = (item, item_amount - 1)
+        return True
 
 
 class InputHandler():
@@ -99,12 +117,17 @@ def check_collision(rect1: pygame.rect.Rect, rect2: pygame.rect.Rect) -> bool:
     else:
         return False
 
+class Statusbar():
+    def __init__(self, screen: pygame.Surface, font: pygame.font.Font, player: Player):
+        self.screen = screen
+        self.font = font
+        self.player = Player
 
-def update_statusbar(screen: pygame.Surface, player: Player, font: pygame.font.Font) -> None:
-    statusbar = pygame.Surface((WIDTH, STATUSBAR_HEIGHT))
-    statusbar_text = font.render(f'Health: {player.health}', False, WHITE)  # lmao multiple line text isn't supported
-    statusbar.blit(statusbar_text, (0,0))
-    screen.blit(statusbar, (0, HEIGHT-STATUSBAR_HEIGHT))
+    def update_statusbar(self) -> None:
+        statusbar = pygame.Surface((WIDTH, STATUSBAR_HEIGHT))
+        statusbar_text = self.font.render(f'Health: {player.health}', False, WHITE)  # lmao multiple line text isn't supported
+        statusbar.blit(statusbar_text, (0,0))
+        screen.blit(statusbar, (0, HEIGHT-STATUSBAR_HEIGHT))
     
 
 
@@ -128,6 +151,7 @@ if __name__ == "__main__":
     player = Player(pygame.Surface((TILE_SIZE, TILE_SIZE)))
         
     background = create_background(FLOOR_IMG)
+    statusbar = Statusbar(screen, FONT, player)
 
     # game loop
     running = True
@@ -157,7 +181,7 @@ if __name__ == "__main__":
 
             render_tile_plain(screen, player.player_color, player.pos_x, player.pos_y)
             add_wall(screen, GRAY, x=7, y=7, direction=Direction.NORTH, length=5)
-            update_statusbar(screen, player, FONT)
+            statusbar.update_statusbar()
 
             pygame.display.update()
             clock.tick(FPS)
