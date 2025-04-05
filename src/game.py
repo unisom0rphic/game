@@ -19,11 +19,10 @@ class Direction(Enum):
     SOUTH = 3
     WEST  = 4
 
+
 # Classes
 class Player:
-
-    def __init__(self, player_surf):
-        self.health = 100
+    def __init__(self, player_surf: pygame.Surface) -> None:
         self.health = 100
         self.armor = 0
         self.inventory = Inventory(10)
@@ -33,6 +32,11 @@ class Player:
         self.player_surf = player_surf
         self.player_surf.fill(GRAY)
         print("PLAYER IS CREATED")
+
+    def get_info(self) -> dict:
+        '''Returns info about the player in a dictionary'''
+        pass
+        return {}
 
 
 class Item:
@@ -65,7 +69,6 @@ class Inventory:
             return True
         return False
             
-
     def remove_item(self, item: Item) -> bool:
         '''Returns True if item can be deleted, False otherwise'''
         if not item.name in self.slots: return False
@@ -79,6 +82,22 @@ class InputHandler():
     def __init__(self) -> None:
         pass
 
+
+class Statusbar():
+    def __init__(self, screen: pygame.Surface, font: pygame.font.Font, player: Player):
+        self.screen = screen
+        self.font = font
+        self.player = player
+
+    def update_statusbar(self) -> None:
+        player_info = player.get_info()
+        statusbar = pygame.Surface((WIDTH, STATUSBAR_HEIGHT))
+        # player info gets displayed here
+        statusbar_text = self.font.render(f'Health: {self.player.health}', False, WHITE)  # lmao multiple line text isn't supported
+        statusbar.blit(statusbar_text, (0,0))
+        screen.blit(statusbar, (0, HEIGHT-STATUSBAR_HEIGHT))
+
+
 # Functions
 def create_background(background_tile: pygame.Surface) -> pygame.Surface:
     background = pygame.Surface((WIDTH, HEIGHT))
@@ -87,12 +106,10 @@ def create_background(background_tile: pygame.Surface) -> pygame.Surface:
             background.blit(background_tile, (x,y))
     return background
 
-
 def render_tile_plain(screen: pygame.Surface, color: pygame.color.Color, x: int, y: int) -> None:
     new_surface = pygame.Surface((TILE_SIZE,TILE_SIZE))
     new_surface.fill(color)
     screen.blit(new_surface, (x*TILE_SIZE, y*TILE_SIZE))
-
 
 def add_wall(screen: pygame.Surface, color: pygame.color.Color, x: int, y: int, direction: Direction, length: int) -> None:
     match direction:
@@ -109,25 +126,12 @@ def add_wall(screen: pygame.Surface, color: pygame.color.Color, x: int, y: int, 
             if (x-length >= 0):
                 [render_tile_plain(screen, color, x-i, y) for i in range(length)]
 
-
 def check_collision(rect1: pygame.rect.Rect, rect2: pygame.rect.Rect) -> bool:
     if (rect1.x > rect2.x) and (rect1.x < rect2.x+rect2.width) or \
             (rect1.y > rect2.y) and (rect1.y < rect2.y+rect2.height):
             return True
     else:
         return False
-
-class Statusbar():
-    def __init__(self, screen: pygame.Surface, font: pygame.font.Font, player: Player):
-        self.screen = screen
-        self.font = font
-        self.player = Player
-
-    def update_statusbar(self) -> None:
-        statusbar = pygame.Surface((WIDTH, STATUSBAR_HEIGHT))
-        statusbar_text = self.font.render(f'Health: {player.health}', False, WHITE)  # lmao multiple line text isn't supported
-        statusbar.blit(statusbar_text, (0,0))
-        screen.blit(statusbar, (0, HEIGHT-STATUSBAR_HEIGHT))
     
 
 
