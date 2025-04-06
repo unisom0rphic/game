@@ -1,5 +1,6 @@
 import pygame
 from enum import Enum
+from typing import Callable
 
 TILE_SIZE = 32 
 FPS = 60
@@ -40,11 +41,13 @@ class Player:
 
 
 class Item:
-    def __init__(self, name: str, icon: pygame.Surface, description: str, stackable: bool = True) -> None:
+    def __init__(self, name: str, icon: pygame.Surface, description: str, 
+                 use: Callable[..., bool] | None, stackable: bool = True) -> None:
         self.name = name
         self.icon = icon
         self.description = description
         self.stackable = stackable
+        self.use = use
 
 
 class Inventory:
