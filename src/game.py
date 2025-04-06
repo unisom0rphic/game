@@ -3,9 +3,9 @@ from enum import Enum
 from typing import Callable
 
 TILE_SIZE = 32 
-FPS = 60
-WIDTH, HEIGHT = TILE_SIZE*32, TILE_SIZE*24
-STATUSBAR_HEIGHT = TILE_SIZE*4
+FPS = 30
+WIDTH, HEIGHT = TILE_SIZE*30, TILE_SIZE*25
+STATUSBAR_HEIGHT = TILE_SIZE*5
 LINE_OFFSET = 20 # px
 
 # Colors
@@ -41,6 +41,41 @@ class Player:
                 "armor": self.armor, 
                 "slots": self.inventory.slots,
                 "position": (self.pos_x, self.pos_y)}
+
+
+class Tile:
+    def __init__(self, image: pygame.Surface, position: tuple) -> None:
+        self.image = image
+        self.position = position
+
+
+class GameField:
+    def __init__(self, background_image: pygame.Surface) -> None:
+        self.tiles = [[Tile(background_image, (i, j)) 
+                        for i in range(WIDTH//TILE_SIZE)] 
+                        for j in range(HEIGHT//TILE_SIZE)]
+        self.field_surf = pygame.Surface((WIDTH, HEIGHT))
+        self._redraw()
+
+    def _redraw(self) -> None:
+        self.field_surf.fill(BLACK)
+        for row in self.tiles:
+            for tile in row:
+                self.field_surf.blit(tile.image, (tile.position[0]*TILE_SIZE, tile.position[1]*TILE_SIZE))
+
+    def _swap(self, pos1: tuple, pos2: tuple) -> None:
+        j1, i1 = pos1
+        j2, i2 = pos2
+        self.tiles[i1][j1], self.tiles[i2][j2] = self.tiles[i2][j2], self.tiles[i1][j1]
+
+    def change_tile(self, tile: Tile) -> None:
+        j, i = tile.position
+        self.tiles[i][j] = tile
+
+    def display_field(self) -> pygame.Surface:
+        return self.field_surf
+
+
 
 
 class Item:
@@ -106,15 +141,6 @@ class Statusbar():
             statusbar.blit(feature_surf, (0, i*LINE_OFFSET))
         screen.blit(statusbar, (0, HEIGHT-STATUSBAR_HEIGHT))
 
-
-# Functions
-def create_background(background_tile: pygame.Surface) -> pygame.Surface:
-    background = pygame.Surface((WIDTH, HEIGHT))
-    for x in range(0, WIDTH, TILE_SIZE):
-        for y in range(0, HEIGHT, TILE_SIZE):
-            background.blit(background_tile, (x,y))
-    return background
-
 def render_tile_plain(screen: pygame.Surface, color: pygame.color.Color, x: int, y: int) -> None:
     new_surface = pygame.Surface((TILE_SIZE,TILE_SIZE))
     new_surface.fill(color)
@@ -168,13 +194,13 @@ if __name__ == "__main__":
 
     player = Player(pygame.Surface((TILE_SIZE, TILE_SIZE)))
         
-    background = create_background(FLOOR_IMG)
+    game_field = GameField(FLOOR_IMG)
     statusbar = Statusbar(screen, FONT, player)
 
     # game loop
     running = True
     while running:
-        screen.blit(background, (0,0))
+        screen.blit(game_field.display_field(), (0,0))
 
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
