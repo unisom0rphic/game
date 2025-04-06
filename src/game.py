@@ -6,6 +6,7 @@ TILE_SIZE = 32
 FPS = 60
 WIDTH, HEIGHT = TILE_SIZE*32, TILE_SIZE*24
 STATUSBAR_HEIGHT = TILE_SIZE*4
+LINE_OFFSET = 20 # px
 
 # Colors
 WHITE = pygame.color.Color(255,255,255)
@@ -36,8 +37,10 @@ class Player:
 
     def get_info(self) -> dict:
         '''Returns info about the player in a dictionary'''
-        pass
-        return {}
+        return {"health": self.health, 
+                "armor": self.armor, 
+                "slots": self.inventory.slots,
+                "position": (self.pos_x, self.pos_y)}
 
 
 class Item:
@@ -93,11 +96,14 @@ class Statusbar():
         self.player = player
 
     def update_statusbar(self) -> None:
-        player_info = player.get_info()
         statusbar = pygame.Surface((WIDTH, STATUSBAR_HEIGHT))
-        # player info gets displayed here
-        statusbar_text = self.font.render(f'Health: {self.player.health}', False, WHITE)  # lmao multiple line text isn't supported
-        statusbar.blit(statusbar_text, (0,0))
+        player_info = player.get_info()
+        statusbar_text = []
+        for feature, value in player_info.items():
+            statusbar_text.append(f'{feature}: {value}')
+        for i, feature in enumerate(statusbar_text):
+            feature_surf = FONT.render(feature, False, WHITE)
+            statusbar.blit(feature_surf, (0, i*LINE_OFFSET))
         screen.blit(statusbar, (0, HEIGHT-STATUSBAR_HEIGHT))
 
 
