@@ -155,8 +155,13 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
     
     # Sprites
+    blank_surf = pygame.Surface((TILE_SIZE, TILE_SIZE))
+    blank_surf.fill(WHITE)  # for testing purposes
     FLOOR_IMG = pygame.image.load("../sprites/Floor.png").convert_alpha()
     FONT = pygame.font.Font(None, 30)
+
+    # Items
+    sword = Item('Sword', blank_surf, 'A sword', None, False)
      
     wall1 = pygame.rect.Rect(0, 0, TILE_SIZE, TILE_SIZE)
     wall2 = pygame.rect.Rect(0, 0, TILE_SIZE, TILE_SIZE)
@@ -190,6 +195,8 @@ if __name__ == "__main__":
                         player.pos_y += 1
                 elif event.key == pygame.K_d:
                     if player.health > 5: player.health -= 5
+                elif event.key == pygame.K_i:
+                    player.inventory.add_item(sword)
 
 
             render_tile_plain(screen, player.player_color, player.pos_x, player.pos_y)
