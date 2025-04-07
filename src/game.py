@@ -1,4 +1,5 @@
 import pygame
+import numpy as np
 from enum import Enum
 from typing import Callable
 
@@ -51,9 +52,10 @@ class Tile:
 
 class GameField:
     def __init__(self, background_image: pygame.Surface) -> None:
-        self.tiles = [[Tile(background_image, (i, j)) 
+        self.tiles = np.array([[Tile(background_image, (i, j)) 
                         for i in range(WIDTH//TILE_SIZE)] 
-                        for j in range(HEIGHT//TILE_SIZE)]
+                        for j in range((HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE)])  # np.array as a desperate attempt to optimize
+        print(f'GameField tiles shape: {self.tiles.shape}')
         self.field_surf = pygame.Surface((WIDTH, HEIGHT))
         self._redraw()
 
@@ -66,11 +68,11 @@ class GameField:
     def _swap(self, pos1: tuple, pos2: tuple) -> None:
         j1, i1 = pos1
         j2, i2 = pos2
-        self.tiles[i1][j1], self.tiles[i2][j2] = self.tiles[i2][j2], self.tiles[i1][j1]
+        self.tiles[i1,j1], self.tiles[i2,j2] = self.tiles[i2,j2], self.tiles[i1,j1]
 
     def change_tile(self, tile: Tile) -> None:
         j, i = tile.position
-        self.tiles[i][j] = tile
+        self.tiles[i,j] = tile
 
     def display_field(self) -> pygame.Surface:
         return self.field_surf
