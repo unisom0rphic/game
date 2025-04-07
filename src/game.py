@@ -1,7 +1,7 @@
 import pygame
 import numpy as np
 from enum import Enum
-from typing import Callable
+from typing import Callable, Optional
 
 TILE_SIZE = 32 
 FPS = 30
@@ -40,8 +40,10 @@ class Player:
         '''Returns info about the player in a dictionary'''
         return {"health": self.health, 
                 "armor": self.armor, 
-                "slots": self.inventory.slots,
                 "position": (self.pos_x, self.pos_y)}
+
+    def get_inv(self) -> 'Inventory':
+        return self.inventory
 
 
 class Tile:
@@ -76,8 +78,6 @@ class GameField:
 
     def display_field(self) -> pygame.Surface:
         return self.field_surf
-
-
 
 
 class Item:
@@ -131,17 +131,38 @@ class Statusbar():
         self.screen = screen
         self.font = font
         self.player = player
+        self.statusbar = pygame.Surface((WIDTH, STATUSBAR_HEIGHT))
+        self.PANEL_SECTION_OFFSET = WIDTH//3
 
     def update_statusbar(self) -> None:
-        statusbar = pygame.Surface((WIDTH, STATUSBAR_HEIGHT))
+        self.statusbar.fill(BLACK)
+        self._update_right_panel()  # general info
+        self._update_middle_panel()  # inventory
+        self._update_left_panel()  # environment
+        screen.blit(self.statusbar, (0, HEIGHT-STATUSBAR_HEIGHT))
+
+    def _update_right_panel(self) -> None:
+        right_panel_text = []
         player_info = player.get_info()
-        statusbar_text = []
         for feature, value in player_info.items():
-            statusbar_text.append(f'{feature}: {value}')
-        for i, feature in enumerate(statusbar_text):
+            right_panel_text.append(f'{feature}: {value}')
+        for i, feature in enumerate(right_panel_text):
             feature_surf = FONT.render(feature, False, WHITE)
-            statusbar.blit(feature_surf, (0, i*LINE_OFFSET))
-        screen.blit(statusbar, (0, HEIGHT-STATUSBAR_HEIGHT))
+            self.statusbar.blit(feature_surf, (0, i*LINE_OFFSET))
+
+    def _update_middle_panel(self) -> None:
+        inv = player.get_inv()
+        line_icons = inv.capacity//2
+        middle_panel_surf = pygame.Surface((TILE_SIZE*line_icons, TILE_SIZE*2))
+        for i, slot in enumerate(inv.slots.values()):
+            # slot is a tuple, containing an item and it's amount
+            item = slot[0]
+            is_in_second_line = int(i) > line_icons
+            middle_panel_surf.blit(item.icon, (TILE_SIZE*(i%line_icons),TILE_SIZE*is_in_second_line))
+        self.statusbar.blit(middle_panel_surf, (self.PANEL_SECTION_OFFSET, 0))
+
+    def _update_left_panel(self) -> None:
+        pass
 
 # Functions
 def render_tile_plain(screen: pygame.Surface, color: pygame.color.Color, x: int, y: int) -> None:
@@ -175,7 +196,6 @@ def check_collision(rect1: pygame.rect.Rect, rect2: pygame.rect.Rect) -> bool:
 
 
 
-
 if __name__ == "__main__":
     pygame.init()
 
@@ -188,11 +208,14 @@ if __name__ == "__main__":
     # Sprites
     blank_surf = pygame.Surface((TILE_SIZE, TILE_SIZE))
     blank_surf.fill(WHITE)  # for testing purposes
+    pink_surf = pygame.Surface((TILE_SIZE, TILE_SIZE))
+    pink_surf.fill('pink')  # for testing purposes
     FLOOR_IMG = pygame.image.load("../sprites/Floor.png").convert_alpha()
     FONT = pygame.font.Font(None, 30)
 
     # Items
     sword = Item('Sword', blank_surf, 'A sword', None, False)
+    potion = Item('Potion', pink_surf, 'A potion', None)
      
     wall1 = pygame.rect.Rect(0, 0, TILE_SIZE, TILE_SIZE)
     wall2 = pygame.rect.Rect(0, 0, TILE_SIZE, TILE_SIZE)
@@ -228,7 +251,8 @@ if __name__ == "__main__":
                     if player.health > 5: player.health -= 5
                 elif event.key == pygame.K_i:
                     player.inventory.add_item(sword)
-
+                elif event.key == pygame.K_o:
+                    player.inventory.add_item(potion)
 
             render_tile_plain(screen, player.player_color, player.pos_x, player.pos_y)
             add_wall(screen, GRAY, x=7, y=7, direction=Direction.NORTH, length=5)
