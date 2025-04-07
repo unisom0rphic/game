@@ -52,9 +52,9 @@ class Tile:
 
 class GameField:
     def __init__(self, background_image: pygame.Surface) -> None:
-        self.tiles = np.array([[Tile(background_image, (i, j)) 
+        self.tiles = np.array([[Tile(background_image, (i, j))
                         for i in range(WIDTH//TILE_SIZE)] 
-                        for j in range((HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE)])  # np.array as a desperate attempt to optimize
+                        for j in range((HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE)])  # np.array as an optimization attempt
         print(f'GameField tiles shape: {self.tiles.shape}')
         self.field_surf = pygame.Surface((WIDTH, HEIGHT))
         self._redraw()
@@ -66,13 +66,13 @@ class GameField:
                 self.field_surf.blit(tile.image, (tile.position[0]*TILE_SIZE, tile.position[1]*TILE_SIZE))
 
     def _swap(self, pos1: tuple, pos2: tuple) -> None:
-        j1, i1 = pos1
-        j2, i2 = pos2
-        self.tiles[i1,j1], self.tiles[i2,j2] = self.tiles[i2,j2], self.tiles[i1,j1]
+        x1, y1 = pos1
+        x2, y2 = pos2
+        self.tiles[x1,y1], self.tiles[x2,y2] = self.tiles[x2,y2], self.tiles[x1,y1]
 
     def change_tile(self, tile: Tile) -> None:
-        j, i = tile.position
-        self.tiles[i,j] = tile
+        x, y = tile.position
+        self.tiles[x,y] = tile
 
     def display_field(self) -> pygame.Surface:
         return self.field_surf
@@ -143,6 +143,7 @@ class Statusbar():
             statusbar.blit(feature_surf, (0, i*LINE_OFFSET))
         screen.blit(statusbar, (0, HEIGHT-STATUSBAR_HEIGHT))
 
+# Functions
 def render_tile_plain(screen: pygame.Surface, color: pygame.color.Color, x: int, y: int) -> None:
     new_surface = pygame.Surface((TILE_SIZE,TILE_SIZE))
     new_surface.fill(color)
@@ -169,7 +170,9 @@ def check_collision(rect1: pygame.rect.Rect, rect2: pygame.rect.Rect) -> bool:
             return True
     else:
         return False
-    
+
+
+
 
 
 
