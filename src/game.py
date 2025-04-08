@@ -3,7 +3,8 @@ import numpy as np
 from enum import Enum
 from typing import Callable, Optional
 
-TILE_SIZE = 32 
+
+TILE_SIZE = 32
 FPS = 30
 WIDTH, HEIGHT = TILE_SIZE*30, TILE_SIZE*25
 STATUSBAR_HEIGHT = TILE_SIZE*5
@@ -13,8 +14,6 @@ LINE_OFFSET = 20 # px
 WHITE = pygame.color.Color(255,255,255)
 BLACK = pygame.color.Color(0,0,0)
 GRAY = pygame.color.Color(100, 100, 100)
-
-
 
 # Directions
 class Direction(Enum):
@@ -29,7 +28,7 @@ class Player:
     def __init__(self, player_surf: pygame.Surface) -> None:
         self.health = 100
         self.armor = 0
-        self.inventory = Inventory(10, EMPTY_SLOT)
+        self.inventory = Inventory(10, INV_SLOT_IMG)
         self.pos_x = 0
         self.pos_y = 0
         self.player_color = GRAY 
@@ -100,7 +99,7 @@ class Inventory:
     def __init__(self, capacity: int, empty_slot: pygame.Surface) -> None:
         self.capacity = capacity
         self.slots = {}
-        self.EMPTY_SLOT = empty_slot
+        self.INV_SLOT_IMG = empty_slot
 
     def add_item(self, item: Item) -> bool:
         '''Returns True if item can be picked up, False otherwise'''
@@ -163,10 +162,13 @@ class Statusbar():
             # slot is a tuple, containing an item and it's amount
             item = inv_slots[i][0] if not is_empty else None
             index_in_line = i-is_in_second_line*icons_in_line
+            icon_pos = TILE_SIZE*index_in_line,TILE_SIZE*is_in_second_line
             if item != None:
-                middle_panel_surf.blit(item.icon, (TILE_SIZE*index_in_line,TILE_SIZE*is_in_second_line))
+                middle_panel_surf.blit(item.icon, (icon_pos))
+                middle_panel_surf.blit(inv.INV_SLOT_IMG, (icon_pos))
             else:
-                middle_panel_surf.blit(inv.EMPTY_SLOT, (TILE_SIZE*index_in_line,TILE_SIZE*is_in_second_line))
+                middle_panel_surf.blit(BLANK_SURF, (icon_pos))
+                middle_panel_surf.blit(inv.INV_SLOT_IMG, (icon_pos))
         self.statusbar.blit(middle_panel_surf, (self.PANEL_SECTION_OFFSET, 0))
 
     def _update_left_panel(self) -> None:
@@ -203,7 +205,8 @@ def check_collision(rect1: pygame.rect.Rect, rect2: pygame.rect.Rect) -> bool:
     else:
         return False
 
-
+def load_sprite(img_name: str) -> pygame.Surface:
+    return pygame.image.load(f'../sprites/{img_name}.png').convert_alpha()
 
 
 
@@ -217,19 +220,18 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
     
     # Sprites
-    blank_surf = pygame.Surface((TILE_SIZE, TILE_SIZE))
-    blank_surf.fill(WHITE)  # for testing purposes
-    pink_surf = pygame.Surface((TILE_SIZE, TILE_SIZE))
-    pink_surf.fill('pink')  # for testing purposes
+    BLANK_SURF = pygame.Surface((TILE_SIZE, TILE_SIZE)).convert_alpha()
+    BLANK_SURF.fill(BLACK)
 
-    EMPTY_SLOT = pygame.Surface((TILE_SIZE, TILE_SIZE)) #pygame.image.load("../sprites/empty_slot.png").convert_alpha()
-    EMPTY_SLOT.fill('lightblue')
-    FLOOR_IMG = pygame.image.load("../sprites/Floor.png").convert_alpha()
+    INV_SLOT_IMG = load_sprite('Inventory_slot')
+    FLOOR_IMG    = load_sprite('Floor')
+    SWORD_IMG    = load_sprite('Sword')
+    POTION_IMG   = load_sprite('Potion')
     FONT = pygame.font.Font(None, 30)
 
     # Items
-    sword = Item('Sword', blank_surf, 'A sword', None, False)
-    potion = Item('Potion', pink_surf, 'A potion', None)
+    sword = Item('Sword', SWORD_IMG, 'A sword', None, False)
+    potion = Item('Potion', POTION_IMG, 'A potion', None)
      
     wall1 = pygame.rect.Rect(0, 0, TILE_SIZE, TILE_SIZE)
     wall2 = pygame.rect.Rect(0, 0, TILE_SIZE, TILE_SIZE)
