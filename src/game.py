@@ -15,6 +15,7 @@ BLACK = pygame.color.Color(0,0,0)
 GRAY = pygame.color.Color(100, 100, 100)
 
 
+
 # Directions
 class Direction(Enum):
     NORTH = 1
@@ -28,7 +29,7 @@ class Player:
     def __init__(self, player_surf: pygame.Surface) -> None:
         self.health = 100
         self.armor = 0
-        self.inventory = Inventory(10)
+        self.inventory = Inventory(10, EMPTY_SLOT)
         self.pos_x = 0
         self.pos_y = 0
         self.player_color = GRAY 
@@ -96,9 +97,10 @@ class Inventory:
     Stackable objects can be stacked indefinetely.
     Unstackable ones can only exist in one instance.   
     '''
-    def __init__(self, capacity: int) -> None:
+    def __init__(self, capacity: int, empty_slot: pygame.Surface) -> None:
         self.capacity = capacity
         self.slots = {}
+        self.EMPTY_SLOT = empty_slot
 
     def add_item(self, item: Item) -> bool:
         '''Returns True if item can be picked up, False otherwise'''
@@ -152,17 +154,26 @@ class Statusbar():
 
     def _update_middle_panel(self) -> None:
         inv = player.get_inv()
-        line_icons = inv.capacity//2
-        middle_panel_surf = pygame.Surface((TILE_SIZE*line_icons, TILE_SIZE*2))
-        for i, slot in enumerate(inv.slots.values()):
+        inv_slots = list(inv.slots.values())
+        icons_in_line = inv.capacity//2
+        middle_panel_surf = pygame.Surface((TILE_SIZE*icons_in_line, TILE_SIZE*2))
+        for i in range(inv.capacity):
+            is_empty = i >= len(inv_slots)
+            is_in_second_line = i >= icons_in_line
             # slot is a tuple, containing an item and it's amount
-            item = slot[0]
-            is_in_second_line = int(i) > line_icons
-            middle_panel_surf.blit(item.icon, (TILE_SIZE*(i%line_icons),TILE_SIZE*is_in_second_line))
+            item = inv_slots[i][0] if not is_empty else None
+            index_in_line = i-is_in_second_line*icons_in_line
+            if item != None:
+                middle_panel_surf.blit(item.icon, (TILE_SIZE*index_in_line,TILE_SIZE*is_in_second_line))
+            else:
+                middle_panel_surf.blit(inv.EMPTY_SLOT, (TILE_SIZE*index_in_line,TILE_SIZE*is_in_second_line))
         self.statusbar.blit(middle_panel_surf, (self.PANEL_SECTION_OFFSET, 0))
 
     def _update_left_panel(self) -> None:
-        pass
+        left_panel_text = []
+        env_surf = pygame.Surface((self.PANEL_SECTION_OFFSET, STATUSBAR_HEIGHT))
+        # env_info = player.get_env_info()
+        self.statusbar.blit(env_surf, (self.PANEL_SECTION_OFFSET*2, 0))
 
 # Functions
 def render_tile_plain(screen: pygame.Surface, color: pygame.color.Color, x: int, y: int) -> None:
@@ -210,6 +221,9 @@ if __name__ == "__main__":
     blank_surf.fill(WHITE)  # for testing purposes
     pink_surf = pygame.Surface((TILE_SIZE, TILE_SIZE))
     pink_surf.fill('pink')  # for testing purposes
+
+    EMPTY_SLOT = pygame.Surface((TILE_SIZE, TILE_SIZE)) #pygame.image.load("../sprites/empty_slot.png").convert_alpha()
+    EMPTY_SLOT.fill('lightblue')
     FLOOR_IMG = pygame.image.load("../sprites/Floor.png").convert_alpha()
     FONT = pygame.font.Font(None, 30)
 
