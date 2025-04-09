@@ -6,6 +6,7 @@
  > - Game field generation depends on this tile grid (might need a sketch)
  > - pygame uses 100% of the CPU core
  - [x] inventory? a dictionary or something
+ - it's even **VISIBLE**
  ==***how do I render projectiles***==
  - [-] add enemies
  - [-] add collision
@@ -15,9 +16,9 @@
  - i might forget math while programming that's unfortunate
 
 ---
-### Inventory
+### Statusbar
 WIDTH should be divisible by 3 to get even-sized panels 
-- RIGHT panel - general info about the player
-- MIDDLE panel - inventory (icons)
-- LEFT panel - info about environment (enemies, distance, etc...)
+- [ ] RIGHT panel - general info about the player
+- [ ] MIDDLE panel - inventory (icons)
+- [ ] LEFT panel - info about environment (enemies, distance, etc...)
 

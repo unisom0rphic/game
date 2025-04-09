@@ -29,8 +29,7 @@ class Player:
         self.health = 100
         self.armor = 0
         self.inventory = Inventory(10, INV_SLOT_IMG)
-        self.pos_x = 0
-        self.pos_y = 0
+        self.pos = [0,0]
         self.player_color = GRAY 
         self.player_surf = player_surf
         self.player_surf.fill(GRAY)
@@ -40,41 +39,45 @@ class Player:
         '''Returns info about the player in a dictionary'''
         return {"health": self.health, 
                 "armor": self.armor, 
-                "position": (self.pos_x, self.pos_y)}
+                "position": self.pos}
 
     def get_inv(self) -> 'Inventory':
         return self.inventory
 
 
 class Tile:
-    def __init__(self, image: pygame.Surface, position: tuple) -> None:
+    def __init__(self, image: pygame.Surface, position: tuple, have_collision: bool = False) -> None:
         self.image = image
         self.position = position
+        self.have_collision = have_collision
 
 
 class GameField:
     def __init__(self, background_image: pygame.Surface) -> None:
-        self.tiles = np.array([[Tile(background_image, (i, j))
-                        for i in range(WIDTH//TILE_SIZE)] 
-                        for j in range((HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE)])  # np.array as an optimization attempt
+        self.tiles = np.array([[Tile(background_image, (r, c))
+                        for c in range(WIDTH//TILE_SIZE)]
+                        for r in range((HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE)])  # np.array as an optimization attempt
         print(f'GameField tiles shape: {self.tiles.shape}')
         self.field_surf = pygame.Surface((WIDTH, HEIGHT))
         self._redraw()
 
     def _redraw(self) -> None:
         self.field_surf.fill(BLACK)
-        for row in self.tiles:
-            for tile in row:
-                self.field_surf.blit(tile.image, (tile.position[0]*TILE_SIZE, tile.position[1]*TILE_SIZE))
+        for line in self.tiles:
+            for tile in line:
+                row, col = tile.position
+                self.field_surf.blit(tile.image, (col*TILE_SIZE, row*TILE_SIZE))
 
     def _swap(self, pos1: tuple, pos2: tuple) -> None:
-        x1, y1 = pos1
-        x2, y2 = pos2
-        self.tiles[x1,y1], self.tiles[x2,y2] = self.tiles[x2,y2], self.tiles[x1,y1]
+        r1, c1 = pos1
+        r2, c2 = pos2
+        self.tiles[r1,c1], self.tiles[r2,c2] = self.tiles[r2,c2], self.tiles[r1,c1]
+        self._redraw()
 
     def change_tile(self, tile: Tile) -> None:
-        x, y = tile.position
-        self.tiles[x,y] = tile
+        r, c = tile.position
+        self.tiles[r,c] = tile
+        self._redraw()
 
     def display_field(self) -> pygame.Surface:
         return self.field_surf
@@ -178,32 +181,36 @@ class Statusbar():
         self.statusbar.blit(env_surf, (self.PANEL_SECTION_OFFSET*2, 0))
 
 # Functions
-def render_tile_plain(screen: pygame.Surface, color: pygame.color.Color, x: int, y: int) -> None:
+def render_tile_plain(screen: pygame.Surface, color: pygame.color.Color, pos: list[int]) -> None:
     new_surface = pygame.Surface((TILE_SIZE,TILE_SIZE))
     new_surface.fill(color)
-    screen.blit(new_surface, (x*TILE_SIZE, y*TILE_SIZE))
+    screen.blit(new_surface, (pos[1]*TILE_SIZE, pos[0]*TILE_SIZE))
 
-def add_wall(screen: pygame.Surface, color: pygame.color.Color, x: int, y: int, direction: Direction, length: int) -> None:
+def add_wall(screen: pygame.Surface, wall_img: pygame.Surface, gamefield: GameField, row: int, col: int, direction: Direction, length: int) -> None:
     match direction:
         case Direction.NORTH:
-            if (y-length >= 0):
-                [render_tile_plain(screen, color, x, y-i) for i in range(length)]
+            if (row-length >= 0):
+                for i in range(length):
+                    wall = Tile(wall_img, (row-i,col), True)
+                    gamefield.change_tile(wall)
         case Direction.EAST:
-            if (x+length < WIDTH):
-                [render_tile_plain(screen, color, x+i, y) for i in range(length)]
+            if (col+length < WIDTH):
+                for i in range(length):
+                    wall = Tile(wall_img, (row-i,col), True)
+                    gamefield.change_tile(wall)
         case Direction.SOUTH:
-            if (y+length < HEIGHT):
-                [render_tile_plain(screen, color, x, y+i) for i in range(length)]
+            if (row+length < HEIGHT):
+                for i in range(length):
+                    wall = Tile(wall_img, (row+i, col), True)
+                    gamefield.change_tile(wall)
         case Direction.WEST:
-            if (x-length >= 0):
-                [render_tile_plain(screen, color, x-i, y) for i in range(length)]
+            if (col-length >= 0):
+                for i in range(length):
+                    wall = Tile(wall_img, (row, col-i), True)
+                    gamefield.change_tile(wall)
 
-def check_collision(rect1: pygame.rect.Rect, rect2: pygame.rect.Rect) -> bool:
-    if (rect1.x > rect2.x) and (rect1.x < rect2.x+rect2.width) or \
-            (rect1.y > rect2.y) and (rect1.y < rect2.y+rect2.height):
-            return True
-    else:
-        return False
+def check_collision(pos1: list[int], pos2: list[int]) -> bool:
+    return (pos1[0] == pos2[0] and pos1[1] == pos2[1])
 
 def load_sprite(img_name: str) -> pygame.Surface:
     return pygame.image.load(f'../sprites/{img_name}.png').convert_alpha()
@@ -246,23 +253,39 @@ if __name__ == "__main__":
     while running:
         screen.blit(game_field.display_field(), (0,0))
 
+        render_tile_plain(screen, player.player_color, player.pos)
+        add_wall(screen, BLANK_SURF, game_field, 7, 7, direction=Direction.NORTH, length=5)
+        statusbar.update_statusbar()
+
+        pygame.display.update()
+        clock.tick(FPS)
+
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     exit()
                 elif event.key == pygame.K_RIGHT:
-                    if (player.pos_x+1 < WIDTH//TILE_SIZE):
-                        player.pos_x += 1
+                    next_pos = [player.pos[0], player.pos[1]+1]
+                    if (next_pos[1] < WIDTH//TILE_SIZE):
+                        is_solid = game_field.tiles[next_pos[0]][next_pos[1]].have_collision
+                        if not is_solid:
+                            player.pos = next_pos
                 elif event.key == pygame.K_LEFT:
-                    if (player.pos_x-1 >= 0):
-                        player.pos_x -= 1
+                    next_pos = [player.pos[0], player.pos[1] - 1]
+                    is_solid = game_field.tiles[next_pos[0]][next_pos[1]].have_collision
+                    if (next_pos[1] >= 0) and not is_solid:
+                        player.pos = next_pos
                 elif event.key == pygame.K_UP:
-                    if (player.pos_y-1 >= 0):
-                        player.pos_y -= 1
+                    next_pos = [player.pos[0]-1, player.pos[1]]
+                    is_solid = game_field.tiles[next_pos[0]][next_pos[1]].have_collision
+                    if (next_pos[0] >= 0) and not is_solid:
+                        player.pos = next_pos
                 elif event.key == pygame.K_DOWN:
-                    if (player.pos_y+1 < (HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE):
-                        player.pos_y += 1
+                    next_pos = [player.pos[0]+1, player.pos[1]]
+                    is_solid = game_field.tiles[next_pos[0]][next_pos[1]].have_collision
+                    if (next_pos[0] < (HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE) and not is_solid:
+                        player.pos = next_pos
                 elif event.key == pygame.K_d:
                     if player.health > 5: player.health -= 5
                 elif event.key == pygame.K_i:
@@ -270,9 +293,3 @@ if __name__ == "__main__":
                 elif event.key == pygame.K_o:
                     player.inventory.add_item(potion)
 
-            render_tile_plain(screen, player.player_color, player.pos_x, player.pos_y)
-            add_wall(screen, GRAY, x=7, y=7, direction=Direction.NORTH, length=5)
-            statusbar.update_statusbar()
-
-            pygame.display.update()
-            clock.tick(FPS)
