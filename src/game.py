@@ -54,6 +54,8 @@ class Tile:
 
 class GameField:
     def __init__(self, background_image: pygame.Surface) -> None:
+        self.width = WIDTH//TILE_SIZE
+        self.height = (HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE
         self.tiles = np.array([[Tile(background_image, (r, c))
                         for c in range(WIDTH//TILE_SIZE)]
                         for r in range((HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE)])  # np.array as an optimization attempt
@@ -234,14 +236,12 @@ if __name__ == "__main__":
     FLOOR_IMG    = load_sprite('Floor')
     SWORD_IMG    = load_sprite('Sword')
     POTION_IMG   = load_sprite('Potion')
+    WALL_IMG     = load_sprite('Wall')
     FONT = pygame.font.Font(None, 30)
 
     # Items
     sword = Item('Sword', SWORD_IMG, 'A sword', None, False)
     potion = Item('Potion', POTION_IMG, 'A potion', None)
-     
-    wall1 = pygame.rect.Rect(0, 0, TILE_SIZE, TILE_SIZE)
-    wall2 = pygame.rect.Rect(0, 0, TILE_SIZE, TILE_SIZE)
 
     player = Player(pygame.Surface((TILE_SIZE, TILE_SIZE)))
         
@@ -254,7 +254,7 @@ if __name__ == "__main__":
         screen.blit(game_field.display_field(), (0,0))
 
         render_tile_plain(screen, player.player_color, player.pos)
-        add_wall(screen, BLANK_SURF, game_field, 7, 7, direction=Direction.NORTH, length=5)
+        add_wall(screen, WALL_IMG, game_field, 7, 7, direction=Direction.NORTH, length=5)
         statusbar.update_statusbar()
 
         pygame.display.update()
@@ -267,7 +267,7 @@ if __name__ == "__main__":
                     exit()
                 elif event.key == pygame.K_RIGHT:
                     next_pos = [player.pos[0], player.pos[1]+1]
-                    if (next_pos[1] < WIDTH//TILE_SIZE):
+                    if (next_pos[1] < game_field.width):
                         is_solid = game_field.tiles[next_pos[0]][next_pos[1]].have_collision
                         if not is_solid:
                             player.pos = next_pos
@@ -283,9 +283,10 @@ if __name__ == "__main__":
                         player.pos = next_pos
                 elif event.key == pygame.K_DOWN:
                     next_pos = [player.pos[0]+1, player.pos[1]]
-                    is_solid = game_field.tiles[next_pos[0]][next_pos[1]].have_collision
-                    if (next_pos[0] < (HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE) and not is_solid:
-                        player.pos = next_pos
+                    if next_pos[0] < game_field.height:
+                        is_solid = game_field.tiles[next_pos[0]][next_pos[1]].have_collision
+                        if not is_solid:
+                            player.pos = next_pos
                 elif event.key == pygame.K_d:
                     if player.health > 5: player.health -= 5
                 elif event.key == pygame.K_i:
