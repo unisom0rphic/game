@@ -24,70 +24,17 @@ class Direction(Enum):
 
 
 # Classes
-class Player:
-    def __init__(self, player_surf: pygame.Surface) -> None:
-        self.health = 100
-        self.armor = 0
-        self.inventory = Inventory(10, INV_SLOT_IMG)
-        self.pos = [0,0]
-        self.player_color = GRAY 
-        self.player_surf = player_surf
-        self.player_surf.fill(GRAY)
-        print("PLAYER IS CREATED")
-
-    def get_info(self) -> dict:
-        '''Returns info about the player in a dictionary'''
-        return {"health": self.health, 
-                "armor": self.armor, 
-                "position": self.pos}
-
-    def get_inv(self) -> 'Inventory':
-        return self.inventory
-
-
-class Tile:
-    def __init__(self, image: pygame.Surface, position: tuple, have_collision: bool = False) -> None:
-        self.image = image
-        self.position = position
-        self.have_collision = have_collision
-
-
-class GameField:
-    def __init__(self, background_image: pygame.Surface) -> None:
-        self.width = WIDTH//TILE_SIZE
-        self.height = (HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE
-        self.tiles = np.array([[Tile(background_image, (r, c))
-                        for c in range(WIDTH//TILE_SIZE)]
-                        for r in range((HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE)])  # np.array as an optimization attempt
-        print(f'GameField tiles shape: {self.tiles.shape}')
-        self.field_surf = pygame.Surface((WIDTH, HEIGHT))
-        self._redraw()
-
-    def _redraw(self) -> None:
-        self.field_surf.fill(BLACK)
-        for line in self.tiles:
-            for tile in line:
-                row, col = tile.position
-                self.field_surf.blit(tile.image, (col*TILE_SIZE, row*TILE_SIZE))
-
-    def _swap(self, pos1: tuple, pos2: tuple) -> None:
-        r1, c1 = pos1
-        r2, c2 = pos2
-        self.tiles[r1,c1], self.tiles[r2,c2] = self.tiles[r2,c2], self.tiles[r1,c1]
-        self._redraw()
-
-    def change_tile(self, tile: Tile) -> None:
-        r, c = tile.position
-        self.tiles[r,c] = tile
-        self._redraw()
-
-    def display_field(self) -> pygame.Surface:
-        return self.field_surf
+class Entity:
+    def __init__(self, health: int, armor: int, pos: list[int], surf: pygame.Surface) -> None:
+        self.health = health
+        self.armor  = armor
+        self.pos    = pos
+        self.surf   = surf
 
 
 class Item:
     def __init__(self, name: str, icon: pygame.Surface, description: str, 
-                 use: Callable[..., bool] | None, stackable: bool = True) -> None:
+                 use: Optional[Callable[..., bool]], stackable: bool = True) -> None:
         self.name = name
         self.icon = icon
         self.description = description
@@ -95,41 +42,46 @@ class Item:
         self.use = use
 
 
-class Inventory:
-    '''
-    An inventory class.
-    Stackable objects can be stacked indefinetely.
-    Unstackable ones can only exist in one instance.   
-    '''
-    def __init__(self, capacity: int, empty_slot: pygame.Surface) -> None:
-        self.capacity = capacity
-        self.slots = {}
-        self.INV_SLOT_IMG = empty_slot
+class Weapon(Item):
+    def __init__(self, name: str, icon: pygame.Surface, description: str, 
+                 use: Optional[Callable[..., bool]], damage: int, stackable: bool = False) -> None:
+        super().__init__(name, icon, description, use, stackable)
+        self.damage = damage
 
-    def add_item(self, item: Item) -> bool:
-        '''Returns True if item can be picked up, False otherwise'''
-        if item.name in self.slots:
-            if item.stackable:
-                item_amount = self.slots[item.name][1] 
-                self.slots[item.name] = (item, item_amount + 1) 
-                return True
-        elif len(self.slots) < self.capacity:
-            self.slots[item.name] = (item, 1)
-            return True
-        return False
-            
-    def remove_item(self, item: Item) -> bool:
-        '''Returns True if item can be deleted, False otherwise'''
-        if not item.name in self.slots: return False
-        item_amount = self.slots[item.name][1]
-        if item_amount <= 0: return False
-        self.slots[item.name] = (item, item_amount - 1)
-        return True
+
+class Tile:
+    def __init__(self, image: pygame.Surface, pos: tuple, entity: Optional[Entity] = None, have_collision: bool = False) -> None:
+        self.image = image
+        self.pos = pos
+        self.have_collision = have_collision
+        self.entity = entity
 
 
 class InputHandler():
     def __init__(self) -> None:
         pass
+
+
+class Player(Entity):
+    def __init__(self, surf: pygame.Surface) -> None:
+        super().__init__(100, 0, [0,0], surf)
+        self.inventory = Inventory(10, INV_SLOT_IMG)
+        print("PLAYER IS CREATED")
+
+    def get_info(self) -> dict:
+        '''Returns info about the player in a dictionary'''
+        return {"health": self.health, 
+                "armor": self.armor, 
+                "pos": self.pos}
+
+    def get_inv(self) -> 'Inventory':
+        return self.inventory
+
+
+class Enemy(Entity):
+    def __init__(self, health: int, armor: int, pos: list[int], surf: pygame.Surface, weapon: Weapon) -> None:
+        super().__init__(health, armor, pos, surf)
+        self.weapon = weapon
 
 
 class Statusbar():
@@ -182,33 +134,103 @@ class Statusbar():
         # env_info = player.get_env_info()
         self.statusbar.blit(env_surf, (self.PANEL_SECTION_OFFSET*2, 0))
 
+
+class GameField:
+    def __init__(self, background_image: pygame.Surface) -> None:
+        self.width = WIDTH//TILE_SIZE
+        self.height = (HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE
+        self.tiles = np.array([[Tile(background_image, (r, c))
+                        for c in range(WIDTH//TILE_SIZE)]
+                        for r in range((HEIGHT-STATUSBAR_HEIGHT)//TILE_SIZE)])  # np.array as an optimization attempt
+        print(f'GameField tiles shape: {self.tiles.shape}')
+        self.field_surf = pygame.Surface((WIDTH, HEIGHT))
+        self._redraw()
+
+    def _redraw(self) -> None:
+        self.field_surf.fill(BLACK)
+        for line in self.tiles:
+            for tile in line:
+                row, col = tile.pos
+                if tile.entity != None:
+                    self.field_surf.blit(tile.entity.surf, (col*TILE_SIZE, row*TILE_SIZE))
+                else:
+                    self.field_surf.blit(tile.image, (col*TILE_SIZE, row*TILE_SIZE))
+
+    def swap(self, pos1: tuple, pos2: tuple) -> None:
+        r1, c1 = pos1
+        r2, c2 = pos2
+        self.tiles[r1,c1], self.tiles[r2,c2] = self.tiles[r2,c2], self.tiles[r1,c1]
+        self._redraw()
+
+    def change_tile(self, tile: Tile) -> None:
+        r, c = tile.pos
+        self.tiles[r,c] = tile
+        self._redraw()
+
+    def display_field(self) -> pygame.Surface:
+        return self.field_surf
+
+
+class Inventory:
+    '''
+    An inventory class.
+    Stackable objects can be stacked indefinetely.
+    Unstackable ones can only exist in one instance.   
+    '''
+    def __init__(self, capacity: int, empty_slot: pygame.Surface) -> None:
+        self.capacity = capacity
+        self.slots = {}
+        self.INV_SLOT_IMG = empty_slot
+
+    def add_item(self, item: Item) -> bool:
+        '''Returns True if item can be picked up, False otherwise'''
+        if item.name in self.slots:
+            if item.stackable:
+                item_amount = self.slots[item.name][1] 
+                self.slots[item.name] = (item, item_amount + 1) 
+                return True
+        elif len(self.slots) < self.capacity:
+            self.slots[item.name] = (item, 1)
+            return True
+        return False
+            
+    def remove_item(self, item: Item) -> bool:
+        '''Returns True if item can be deleted, False otherwise'''
+        if not item.name in self.slots: return False
+        item_amount = self.slots[item.name][1]
+        if item_amount <= 0: return False
+        self.slots[item.name] = (item, item_amount - 1)
+        return True
+
+
+
 # Functions
 def render_tile_plain(screen: pygame.Surface, color: pygame.color.Color, pos: list[int]) -> None:
     new_surface = pygame.Surface((TILE_SIZE,TILE_SIZE))
     new_surface.fill(color)
     screen.blit(new_surface, (pos[1]*TILE_SIZE, pos[0]*TILE_SIZE))
 
-def add_wall(screen: pygame.Surface, wall_img: pygame.Surface, gamefield: GameField, row: int, col: int, direction: Direction, length: int) -> None:
+def add_wall(wall_img: pygame.Surface, gamefield: GameField, row: int, col: int, direction: Direction, length: int) -> None:
     match direction:
         case Direction.NORTH:
             if (row-length >= 0):
                 for i in range(length):
-                    wall = Tile(wall_img, (row-i,col), True)
+                    wall = Tile(wall_img, (row-i,col), have_collision=True)
                     gamefield.change_tile(wall)
         case Direction.EAST:
             if (col+length < WIDTH):
                 for i in range(length):
-                    wall = Tile(wall_img, (row-i,col), True)
+                    wall = Tile(wall_img, (row-i,col), have_collision=True)
                     gamefield.change_tile(wall)
         case Direction.SOUTH:
             if (row+length < HEIGHT):
                 for i in range(length):
-                    wall = Tile(wall_img, (row+i, col), True)
+                    wall = Tile(wall_img, (row+i, col), have_collision=True)
                     gamefield.change_tile(wall)
         case Direction.WEST:
             if (col-length >= 0):
                 for i in range(length):
-                    wall = Tile(wall_img, (row, col-i), True)
+                    wall = Tile(wall_img, (row, col-i), have_collision=True)
                     gamefield.change_tile(wall)
 
 def check_collision(pos1: list[int], pos2: list[int]) -> bool:
@@ -243,18 +265,19 @@ if __name__ == "__main__":
     sword = Item('Sword', SWORD_IMG, 'A sword', None, False)
     potion = Item('Potion', POTION_IMG, 'A potion', None)
 
-    player = Player(pygame.Surface((TILE_SIZE, TILE_SIZE)))
+    player = Player(surf=BLANK_SURF)
         
     game_field = GameField(FLOOR_IMG)
     statusbar = Statusbar(screen, FONT, player)
+        
+    game_field.tiles[0,0].entity = player
 
     # game loop
     running = True
     while running:
         screen.blit(game_field.display_field(), (0,0))
 
-        render_tile_plain(screen, player.player_color, player.pos)
-        add_wall(screen, WALL_IMG, game_field, 7, 7, direction=Direction.NORTH, length=5)
+        add_wall(WALL_IMG, game_field, 7, 7, direction=Direction.NORTH, length=5)
         statusbar.update_statusbar()
 
         pygame.display.update()
@@ -270,23 +293,35 @@ if __name__ == "__main__":
                     if (next_pos[1] < game_field.width):
                         is_solid = game_field.tiles[next_pos[0]][next_pos[1]].have_collision
                         if not is_solid:
+                            pl_pos = player.pos[0], player.pos[1]
+                            game_field.tiles[pl_pos].entity = None
                             player.pos = next_pos
+                            game_field.tiles[player.pos[0], player.pos[1]].entity = player
                 elif event.key == pygame.K_LEFT:
                     next_pos = [player.pos[0], player.pos[1] - 1]
                     is_solid = game_field.tiles[next_pos[0]][next_pos[1]].have_collision
                     if (next_pos[1] >= 0) and not is_solid:
+                        pl_pos = player.pos[0], player.pos[1]
+                        game_field.tiles[pl_pos].entity = None
                         player.pos = next_pos
+                        game_field.tiles[player.pos[0], player.pos[1]].entity= player
                 elif event.key == pygame.K_UP:
                     next_pos = [player.pos[0]-1, player.pos[1]]
                     is_solid = game_field.tiles[next_pos[0]][next_pos[1]].have_collision
                     if (next_pos[0] >= 0) and not is_solid:
+                        pl_pos = player.pos[0], player.pos[1]
+                        game_field.tiles[pl_pos].entity = None
                         player.pos = next_pos
+                        game_field.tiles[player.pos[0], player.pos[1]].entity = player
                 elif event.key == pygame.K_DOWN:
                     next_pos = [player.pos[0]+1, player.pos[1]]
                     if next_pos[0] < game_field.height:
                         is_solid = game_field.tiles[next_pos[0]][next_pos[1]].have_collision
                         if not is_solid:
+                            pl_pos = player.pos[0], player.pos[1]
+                            game_field.tiles[pl_pos].entity = None
                             player.pos = next_pos
+                            game_field.tiles[player.pos[0], player.pos[1]].entity = player
                 elif event.key == pygame.K_d:
                     if player.health > 5: player.health -= 5
                 elif event.key == pygame.K_i:
