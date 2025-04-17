@@ -11,6 +11,7 @@
  - [-] add enemies
  - [x] add collision
  - [ ] we MUST add a fucking toucan that will do nothing
+ - [ ] make player movement (like a move_entity function in GameField or something) 
 ~~16x16~~ or **32x32**
  - maybe add sections for ideas that are present here
  - i might forget math while programming that's unfortunate
