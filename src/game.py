@@ -10,8 +10,13 @@ from systems.gamefield import GameField
 from systems.statusbar import Statusbar
 from entities.entity import Direction
 
-def use_potion(player: Player):
-    player.health = min(100, player.health + 30)
+def use_potion(p: Player, *args):  # DAMN this works
+    p.health = min(100, p.health + 30)
+
+def equip(p: Player, g: GameField, w: Weapon, *args):
+    if p.weapon is not None:
+        g.get_tile(p.pos).items.append(p.weapon) 
+    p.weapon = w
 
 def handle_input(key, player, enemies, game_field):
     if key == pygame.K_ESCAPE:
@@ -67,7 +72,7 @@ def handle_input(key, player, enemies, game_field):
         if slot in player.inventory.slots:
             item = player.inventory.slots[slot]
             if item.use:
-                item.use(player)
+                item.use(player, game_field, item)
                 player.inventory.remove_item(slot)
     
     elif key == pygame.K_g:
@@ -97,16 +102,18 @@ def main():
     
     # Create items
     global sword, potion # FIXME: used for testing, won't be added to the inventory directly anyway 
-    sword = Weapon('Sword', SWORD_IMG, 'A sharp sword', damage=10)
     potion = Item('Potion', POTION_IMG, 'Heals 30 HP', use=use_potion)
-    sledgehammer = Weapon('Sledgehammer', BLANK_SURF, 'A BIG sledgehammer', damage=20)
+    sword = Weapon('Sword', SWORD_IMG, 'A sharp sword', damage=20, use=equip)
+    sledgehammer = Weapon('Sledgehammer', BLANK_SURF, 'A BIG sledgehammer', damage=45)
+    mace = Weapon('Mace', BLANK_SURF, 'A mace', damage=30)
+    knife = Weapon('Knife', BLANK_SURF, 'A small knife', damage=10)
     
     # Create entities
     player = Player(BLANK_SURF, INV_SLOT_IMG, SELECTED_SLOT_IMG)
     enemies = [
-        Enemy('Goblin', 100, 0, [10, 10], BLANK_SURF, 10, sword),
-        Enemy('Orc', 100, 0, [7, 11], BLANK_SURF, 10, sword),
-        Enemy('Troll', 120, 0, [0, 15], BLANK_SURF, detection_range=7, weapon=sledgehammer)
+        Enemy('Goblin', 80, 0, [10, 10], BLANK_SURF, detection_range=10, weapon=knife),
+        Enemy('Orc', 100, 10, [7, 11], BLANK_SURF, detection_range=7, weapon=sword),
+        Enemy('Troll', 120, 40, [0, 15], BLANK_SURF, detection_range=5, weapon=sledgehammer)
     ]
     
     # Initialize game systems
@@ -122,6 +129,7 @@ def main():
     # Place items
     game_field.get_tile((12, 16)).items.append(potion)
     game_field.get_tile((6, 17)).items.append(potion)
+    game_field.get_tile((12, 15)).items.append(sword)
     
     # Add walls
     game_field.add_wall(WALL_IMG, 7, 7, Direction.NORTH, 5)

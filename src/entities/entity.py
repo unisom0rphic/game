@@ -34,3 +34,7 @@ class Entity:
                 new_tile = game_field.get_tile(self.pos)
                 new_tile.entity = self
                 new_tile.have_collision = True
+
+    @staticmethod
+    def manhattan_distance(pos1, pos2) -> int:
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])

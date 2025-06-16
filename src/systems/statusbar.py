@@ -50,6 +50,7 @@ class Statusbar:
         panel_width = self.PANEL_SECTION_OFFSET
         panel_surf = pygame.Surface((panel_width, STATUSBAR_HEIGHT))
         env_info = self.player.get_env_info(self.game_field, self.enemies)
+        weapon_info =  "Fists" if self.player.weapon is None else self.player.weapon.name
         
         for i, (key, value) in enumerate(env_info.items()):
             if isinstance(value, list):
@@ -59,5 +60,8 @@ class Statusbar:
                 
             text_surf = self.font.render(text, False, WHITE)
             panel_surf.blit(text_surf, (0, i * LINE_OFFSET))
-        
+
+        # Displaying current weapon
+        text_surf = self.font.render(f'Weapon: {weapon_info}', False, WHITE)
+        panel_surf.blit(text_surf, (0, 5 * LINE_OFFSET))
         self.statusbar.blit(panel_surf, (self.PANEL_SECTION_OFFSET * 2, 0))

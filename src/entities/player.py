@@ -1,11 +1,16 @@
 from entities.entity import Entity
 from systems.inventory import Inventory
+from items.weapon import Weapon
 
 class Player(Entity):
     def __init__(self, surf, inv_slot_img, selected_slot_img) -> None:
         super().__init__(name='Player', health=100, armor=0, pos=[0, 0], 
                          surf=surf, detection_range=10)
         self.inventory = Inventory(10, inv_slot_img, selected_slot_img)
+        self.weapon: Weapon = None # type: ignore
+
+    def _attack(self, target: Entity) -> None:
+        target.health -= self.weapon.damage
 
     def get_info(self) -> dict:
         return {
@@ -33,7 +38,3 @@ class Player(Entity):
 
     def get_inv(self) -> Inventory:
         return self.inventory
-
-    @staticmethod
-    def manhattan_distance(pos1, pos2) -> int:
-        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
