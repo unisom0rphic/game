@@ -1,4 +1,5 @@
 from enum import Enum
+from items.weapon import Weapon
 
 class Direction(Enum):
     NORTH = (-1, 0)
@@ -8,13 +9,24 @@ class Direction(Enum):
 
 class Entity:
     def __init__(self, name: str, health: int, armor: int, pos: list[int], 
-                 surf, detection_range: int) -> None:
+                 surf, weapon: Weapon, detection_range: int) -> None:
         self.name = name
         self.health = health
         self.armor = armor
         self.pos = pos
         self.surf = surf
+        self.weapon = weapon
         self.detection_range = detection_range
+
+    def _attack(self, target: 'Entity') -> None:
+        # TODO: needs balance (critical hits/better armor usage)
+        target.health -= round(self.weapon.damage / (target.armor/self.weapon.armor_penetration))  
+
+    def stun(self):
+        pass
+
+    def bleed(self):
+        pass
 
     def set_pos(self, direction: Direction | tuple[int], game_field) -> None:
         if isinstance(direction, Direction):

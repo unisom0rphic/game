@@ -5,12 +5,8 @@ from items.weapon import Weapon
 class Player(Entity):
     def __init__(self, surf, inv_slot_img, selected_slot_img) -> None:
         super().__init__(name='Player', health=100, armor=0, pos=[0, 0], 
-                         surf=surf, detection_range=10)
+                         surf=surf, weapon=None, detection_range=10)  # type: ignore
         self.inventory = Inventory(10, inv_slot_img, selected_slot_img)
-        self.weapon: Weapon = None # type: ignore
-
-    def _attack(self, target: Entity) -> None:
-        target.health -= self.weapon.damage
 
     def get_info(self) -> dict:
         return {

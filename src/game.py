@@ -103,10 +103,21 @@ def main():
     # Create items
     global sword, potion # FIXME: used for testing, won't be added to the inventory directly anyway 
     potion = Item('Potion', POTION_IMG, 'Heals 30 HP', use=use_potion)
-    sword = Weapon('Sword', SWORD_IMG, 'A sharp sword', damage=20, use=equip)
-    sledgehammer = Weapon('Sledgehammer', BLANK_SURF, 'A BIG sledgehammer', damage=45)
-    mace = Weapon('Mace', BLANK_SURF, 'A mace', damage=30)
-    knife = Weapon('Knife', BLANK_SURF, 'A small knife', damage=10)
+    sword = Weapon('Sword', SWORD_IMG, 'A sharp sword', 
+                    damage=20, stun_chance=0.4, bleeding_chance=0.3, critical_hit_chance=0.3, 
+                    armor_penetration=0.5, use=equip)
+    sledgehammer = Weapon('Sledgehammer', BLANK_SURF, 'A really big and heavy sledgehammer', 
+                    damage=45, stun_chance=0.8, bleeding_chance=0.2, critical_hit_chance=0.3, 
+                    armor_penetration=0.2, use=equip)
+    mace = Weapon('Mace', BLANK_SURF, 'A mace', 
+                    damage=30, stun_chance=0.5, bleeding_chance=0.2, critical_hit_chance=0.3, 
+                    armor_penetration=0.4, use=equip)
+    knife = Weapon('Knife', BLANK_SURF, 'A small knife', 
+                    damage=10, stun_chance=0.1, bleeding_chance=0.2, critical_hit_chance=0.1, 
+                    armor_penetration=0.5, use=equip)
+    axe = Weapon('Axe', BLANK_SURF, 'An old axe', 
+                    damage=15, stun_chance=0.4, bleeding_chance=0.4, critical_hit_chance=0.5, 
+                    armor_penetration=0.4, use=equip)
     
     # Create entities
     player = Player(BLANK_SURF, INV_SLOT_IMG, SELECTED_SLOT_IMG)
@@ -127,6 +138,8 @@ def main():
         game_field.get_tile(enemy.pos).have_collision = True
     
     # Place items
+    # TODO: battle system x levels (bleeding/armor (isn't efficient against heavy weapons)/defense/dodging maybe/critical hits)
+    game_field.get_tile((4,4)).items.append(axe)
     game_field.get_tile((12, 16)).items.append(potion)
     game_field.get_tile((6, 17)).items.append(potion)
     game_field.get_tile((12, 15)).items.append(sword)

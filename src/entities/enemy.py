@@ -1,11 +1,12 @@
 from entities.entity import Entity, Direction
 from utils.functions import manhattan_distance
 from random import choice, randint
+from items.weapon import Weapon
 
 class Enemy(Entity):
     def __init__(self, name: str, health: int, armor: int, pos: list[int], 
-                 surf, detection_range: int, weapon) -> None:
-        super().__init__(name, health, armor, pos, surf, detection_range)
+                 surf, weapon: Weapon, detection_range: int) -> None:
+        super().__init__(name, health, armor, pos, surf, weapon, detection_range)
         self._path = None
         self.weapon = weapon
         self._idle_state_wait_time = randint(1, 3)
@@ -60,6 +61,3 @@ class Enemy(Entity):
         start = tuple(self.pos)
         goal = tuple(target.pos)
         self._path = game_field.bfs_path(start, goal)
-
-    def _attack(self, target: Entity) -> None:
-        target.health -= self.weapon.damage

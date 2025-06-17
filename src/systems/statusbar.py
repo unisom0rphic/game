@@ -9,7 +9,7 @@ class Statusbar:
         self.game_field = game_field
         self.enemies = enemies
         self.statusbar = pygame.Surface((WIDTH, STATUSBAR_HEIGHT))
-        self.PANEL_SECTION_OFFSET = WIDTH // 3
+        self.PANEL_SECTION_OFFSET = WIDTH // 5
 
     def update_statusbar(self) -> None:
         self.statusbar.fill(BLACK)
@@ -47,7 +47,7 @@ class Statusbar:
         self.statusbar.blit(panel_surf, (self.PANEL_SECTION_OFFSET, 0))
 
     def _update_right_panel(self) -> None:
-        panel_width = self.PANEL_SECTION_OFFSET
+        panel_width = self.PANEL_SECTION_OFFSET * 3
         panel_surf = pygame.Surface((panel_width, STATUSBAR_HEIGHT))
         env_info = self.player.get_env_info(self.game_field, self.enemies)
         weapon_info =  "Fists" if self.player.weapon is None else self.player.weapon.name
