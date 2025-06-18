@@ -7,7 +7,7 @@ class Weapon(Item):
                  armor_penetration: float, use: Optional[Callable] = None) -> None:
         super().__init__(name, icon, description, use)
         self.damage = damage
-        self.stun_change = stun_chance
+        self.stun_chance = stun_chance
         self.bleeding_chance = bleeding_chance
         self.critical_hit_chance = critical_hit_chance
         self.armor_penetration = armor_penetration

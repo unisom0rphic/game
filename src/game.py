@@ -38,7 +38,11 @@ def handle_input(key, player, enemies, game_field):
     if key in movements:
         dr, dc = movements[key].value
         new_pos = [player.pos[0] + dr, player.pos[1] + dc]
-        player.set_pos(new_pos, game_field)
+        if game_field.get_tile(new_pos).entity:
+            e = game_field.get_tile(new_pos).entity
+            player.attack(e)
+        else:
+            player.set_pos(new_pos, game_field)
     
     # Testing keys
     elif key == pygame.K_v:
@@ -47,9 +51,8 @@ def handle_input(key, player, enemies, game_field):
         player.inventory.add_item(sword)
     elif key == pygame.K_o:
         player.inventory.add_item(potion)
-    elif key == pygame.K_l:
-        for enemy in enemies:
-            enemy.act(player, game_field)
+    elif key == pygame.K_b:
+        player.bleeding_time = 5
     elif key == pygame.K_p:
         tile = game_field.get_tile(player.pos)
         if tile.items:
@@ -122,9 +125,12 @@ def main():
     # Create entities
     player = Player(BLANK_SURF, INV_SLOT_IMG, SELECTED_SLOT_IMG)
     enemies = [
-        Enemy('Goblin', 80, 0, [10, 10], BLANK_SURF, detection_range=10, weapon=knife),
-        Enemy('Orc', 100, 10, [7, 11], BLANK_SURF, detection_range=7, weapon=sword),
-        Enemy('Troll', 120, 40, [0, 15], BLANK_SURF, detection_range=5, weapon=sledgehammer)
+        Enemy('Goblin', health=80, armor=0, dodge_chance=0.5, 
+                pos=[10, 10], surf=BLANK_SURF, detection_range=10, weapon=knife),
+        Enemy('Orc', health=100, armor=10, dodge_chance=0.3, 
+                pos=[7, 11], surf=BLANK_SURF, detection_range=7, weapon=sword),
+        Enemy('Troll', health=120, armor=40, dodge_chance=0.1, 
+                pos=[0, 15], surf=BLANK_SURF, detection_range=5, weapon=sledgehammer)
     ]
     
     # Initialize game systems
@@ -161,9 +167,14 @@ def main():
                 running = False
             elif event.type == pygame.KEYDOWN:
                 handle_input(event.key, player, enemies, game_field)
+                # Apply any existing effects
+                player.apply_effects()
                 # Enemy AI
                 for enemy in enemies:
+                    if enemy.health < 0:
+                        enemy.die()
                     enemy.act(player, game_field)
+                    enemy.apply_effects()
                 
                 # Rendering
                 game_field.redraw()

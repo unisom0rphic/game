@@ -4,9 +4,9 @@ from random import choice, randint
 from items.weapon import Weapon
 
 class Enemy(Entity):
-    def __init__(self, name: str, health: int, armor: int, pos: list[int], 
+    def __init__(self, name: str, health: int, armor: int, dodge_chance: float, pos: list[int], 
                  surf, weapon: Weapon, detection_range: int) -> None:
-        super().__init__(name, health, armor, pos, surf, weapon, detection_range)
+        super().__init__(name, health, armor, dodge_chance, pos, surf, weapon, detection_range)
         self._path = None
         self.weapon = weapon
         self._idle_state_wait_time = randint(1, 3)
@@ -61,3 +61,6 @@ class Enemy(Entity):
         start = tuple(self.pos)
         goal = tuple(target.pos)
         self._path = game_field.bfs_path(start, goal)
+
+    def die(self) -> None:
+        pass

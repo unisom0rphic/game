@@ -4,9 +4,13 @@ from items.weapon import Weapon
 
 class Player(Entity):
     def __init__(self, surf, inv_slot_img, selected_slot_img) -> None:
-        super().__init__(name='Player', health=100, armor=0, pos=[0, 0], 
+        super().__init__(name='Player', health=100, armor=30, dodge_chance=0.2, pos=[0, 0], 
                          surf=surf, weapon=None, detection_range=10)  # type: ignore
         self.inventory = Inventory(10, inv_slot_img, selected_slot_img)
+
+    def attack(self, target) -> None:
+        print('ATTACK')
+        self._attack(target)
 
     def get_info(self) -> dict:
         return {
@@ -31,6 +35,15 @@ class Player(Entity):
             env_info['enemies_around'] = enemies_around[:3]
         
         return env_info
+
+    def list_effects(self) -> dict:
+        effects = []
+        if self.bleeding_time > 0:
+            effects.append('bleeding')
+        if self.stun_time > 0:
+            effects.append('stunned') 
+
+        return {"Effects": effects} if effects else {}
 
     def get_inv(self) -> Inventory:
         return self.inventory
