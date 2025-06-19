@@ -65,3 +65,13 @@ class Statusbar:
             panel_surf.blit(text_surf, (0, i * LINE_OFFSET))
 
         self.statusbar.blit(panel_surf, (self.PANEL_SECTION_OFFSET * 2, 0))
+
+    def dead_message(self):
+        self.statusbar.fill(BLACK)
+        panel_width = self.PANEL_SECTION_OFFSET * 3
+        panel_surf = pygame.Surface((panel_width, STATUSBAR_HEIGHT))
+        text = 'You died :'
+        text_surf = self.font.render(text, False, WHITE)
+        panel_surf.blit(text_surf, (0, 0))
+        self.statusbar.blit(panel_surf, (self.PANEL_SECTION_OFFSET * 2, 0))
+        self.screen.blit(self.statusbar, (0, HEIGHT - STATUSBAR_HEIGHT))
