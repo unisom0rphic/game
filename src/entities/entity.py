@@ -35,7 +35,7 @@ class Entity:
 
         target_did_dodge = random() < target.dodge_chance
         if target_did_dodge:
-            print('dodged')
+            print(f'{self.name}: dodged')
             return
 
         damage = self.weapon.damage
@@ -44,7 +44,7 @@ class Entity:
 
         is_critical = random() < self.weapon.critical_hit_chance
         if is_critical:
-            print('critical')
+            print(f'{self.name}: critical')
             damage *= 1.5
 
         is_stunning = random() < self.weapon.stun_chance

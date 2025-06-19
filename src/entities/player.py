@@ -9,7 +9,6 @@ class Player(Entity):
         self.inventory = Inventory(10, inv_slot_img, selected_slot_img)
 
     def attack(self, target) -> None:
-        print('ATTACK')
         self._attack(target)
 
     def get_info(self) -> dict:

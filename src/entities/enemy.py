@@ -62,5 +62,7 @@ class Enemy(Entity):
         goal = tuple(target.pos)
         self._path = game_field.bfs_path(start, goal)
 
-    def die(self) -> None:
-        pass
+    def die(self, game_field) -> None:
+        game_field.get_tile(self.pos).entity = None
+        game_field.get_tile(self.pos).have_collision = False
+        

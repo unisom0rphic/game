@@ -9,14 +9,35 @@ from items.weapon import Weapon
 from systems.gamefield import GameField
 from systems.statusbar import Statusbar
 from entities.entity import Direction
+from copy import copy
 
-def use_potion(p: Player, *args):  # DAMN this works
+def use_heal_potion(p: Player, *args):  # DAMN this works
     p.health = min(100, p.health + 30)
 
 def equip(p: Player, g: GameField, w: Weapon, *args):
     if p.weapon is not None:
         g.get_tile(p.pos).items.append(p.weapon) 
     p.weapon = w
+
+def load_level(player, game_field, items: dict['Item', tuple[int, int]], 
+               wall_img, walls_pos: list[tuple[int, int, Direction, int]], 
+               enemies: dict[Enemy, tuple[int, int]]) -> tuple[GameField, list[Enemy]]:
+    '''Returns level configuration'''
+    game_field.get_tile(player.pos).entity = player
+
+    for enemy, pos in enemies.items():
+        enemy.set_pos(pos, game_field) # type: ignore
+        game_field.get_tile(pos).entity = enemy
+        game_field.get_tile(pos).have_collision = True
+
+    for item, pos in items.items():
+        game_field.get_tile(pos).items.append(item)
+
+    for wall in walls_pos:
+        game_field.add_wall(wall_img, *wall)
+
+    return game_field, list(enemies.keys())
+
 
 def handle_input(key, player, enemies, game_field):
     if key == pygame.K_ESCAPE:
@@ -44,33 +65,13 @@ def handle_input(key, player, enemies, game_field):
         else:
             player.set_pos(new_pos, game_field)
     
-    # Testing keys
-    elif key == pygame.K_v:
-        player.health = max(0, player.health - 5)
-    elif key == pygame.K_i:
-        player.inventory.add_item(sword)
-    elif key == pygame.K_o:
-        player.inventory.add_item(potion)
-    elif key == pygame.K_b:
-        player.bleeding_time = 5
+    # Item interactions
     elif key == pygame.K_p:
         tile = game_field.get_tile(player.pos)
         if tile.items:
             player.inventory.add_item(tile.items.pop())
-    
-    # Inventory selection
-    for i, k in enumerate([pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5,
-                            pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9, pygame.K_0]):
-        if k == pygame.K_0:
-            slot = 10
-        else:
-            slot = i + 1
-            
-        if key == k:
-            player.inventory.selected = slot
-    
-    # Item interactions
-    if key == pygame.K_f:
+
+    elif key == pygame.K_f:
         slot = player.inventory.selected
         if slot in player.inventory.slots:
             item = player.inventory.slots[slot]
@@ -84,6 +85,17 @@ def handle_input(key, player, enemies, game_field):
             item = player.inventory.slots[slot]
             game_field.get_tile(player.pos).items.append(item)
             player.inventory.remove_item(slot)
+    
+    # Inventory selection
+    for i, k in enumerate([pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5,
+                            pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9, pygame.K_0]):
+        if k == pygame.K_0:
+            slot = 10
+        else:
+            slot = i + 1
+            
+        if key == k:
+            player.inventory.selected = slot
 
 def main():
     pygame.init()
@@ -98,14 +110,13 @@ def main():
     SELECTED_SLOT_IMG = load_sprite('Selected_slot')
     FLOOR_IMG = load_sprite('Floor')
     SWORD_IMG = load_sprite('Sword')
-    POTION_IMG = load_sprite('Potion')
+    HEAL_POTION_IMG = load_sprite('HealPotion')
     WALL_IMG = load_sprite('Wall')
     
     FONT = pygame.font.Font(None, 30)
     
     # Create items
-    global sword, potion # FIXME: used for testing, won't be added to the inventory directly anyway 
-    potion = Item('Potion', POTION_IMG, 'Heals 30 HP', use=use_potion)
+    heal_potion = Item('heal_potion', HEAL_POTION_IMG, 'Heals 30 HP', use=use_heal_potion)
     sword = Weapon('Sword', SWORD_IMG, 'A sharp sword', 
                     damage=20, stun_chance=0.4, bleeding_chance=0.3, critical_hit_chance=0.3, 
                     armor_penetration=0.5, use=equip)
@@ -124,34 +135,24 @@ def main():
     
     # Create entities
     player = Player(BLANK_SURF, INV_SLOT_IMG, SELECTED_SLOT_IMG)
-    enemies = [
-        Enemy('Goblin', health=80, armor=0, dodge_chance=0.5, 
-                pos=[10, 10], surf=BLANK_SURF, detection_range=10, weapon=knife),
-        Enemy('Orc', health=100, armor=10, dodge_chance=0.3, 
-                pos=[7, 11], surf=BLANK_SURF, detection_range=7, weapon=sword),
-        Enemy('Troll', health=120, armor=40, dodge_chance=0.1, 
-                pos=[0, 15], surf=BLANK_SURF, detection_range=5, weapon=sledgehammer)
-    ]
+    goblin = Enemy('Goblin', health=80, armor=0, dodge_chance=0.5, 
+            pos=[0,0], surf=BLANK_SURF, detection_range=10, weapon=knife)
+    orc = Enemy('Orc', health=100, armor=10, dodge_chance=0.3, 
+            pos=[0,0], surf=BLANK_SURF, detection_range=7, weapon=sword)
+    troll = Enemy('Troll', health=120, armor=40, dodge_chance=0.1, 
+            pos=[0,0], surf=BLANK_SURF, detection_range=5, weapon=sledgehammer)
     
+    
+    items_1 = {axe: (4,4), copy(heal_potion): (10, 20), copy(heal_potion): (6, 17), sword: (12, 15)}
+    walls_1 = [(7,7,Direction.NORTH,5)]
+    enemies_1 = {troll: (12, 14), orc: (11, 2), goblin: (13, 18)}
+
     # Initialize game systems
     game_field = GameField(FLOOR_IMG)
-    statusbar = Statusbar(screen, FONT, player, game_field, enemies)
-    
-    # Place entities
-    game_field.get_tile(player.pos).entity = player
-    for enemy in enemies:
-        game_field.get_tile(enemy.pos).entity = enemy
-        game_field.get_tile(enemy.pos).have_collision = True
-    
-    # Place items
-    # TODO: battle system x levels (bleeding/armor (isn't efficient against heavy weapons)/defense/dodging maybe/critical hits)
-    game_field.get_tile((4,4)).items.append(axe)
-    game_field.get_tile((12, 16)).items.append(potion)
-    game_field.get_tile((6, 17)).items.append(potion)
-    game_field.get_tile((12, 15)).items.append(sword)
-    
-    # Add walls
-    game_field.add_wall(WALL_IMG, 7, 7, Direction.NORTH, 5)
+    statusbar = Statusbar(screen, FONT, player, game_field, enemies_1)
+
+    _, enemies = load_level(player, game_field, items=items_1, wall_img=WALL_IMG, 
+               walls_pos=walls_1, enemies=enemies_1)
 
     # Initial rendering
     game_field.redraw()
@@ -171,10 +172,13 @@ def main():
                 player.apply_effects()
                 # Enemy AI
                 for enemy in enemies:
-                    if enemy.health < 0:
-                        enemy.die()
-                    enemy.act(player, game_field)
-                    enemy.apply_effects()
+                    if enemy.health <= 0:
+                        enemy.die(game_field)
+                        enemies.remove(enemy)
+                        del enemy
+                    else:
+                        enemy.act(player, game_field)
+                        enemy.apply_effects()
                 
                 # Rendering
                 game_field.redraw()
